@@ -15,6 +15,8 @@ const router = express.Router();
 const upload: Multer = multer();
 
 router.post('/resume', upload.single('file'), (req: Request, res: Response) => {
+  try {
+
     if (!req.file) {
       res.status(400).json({
         message: 'File not uploaded',
@@ -23,8 +25,9 @@ router.post('/resume', upload.single('file'), (req: Request, res: Response) => {
     }
   
     const file = req.file;
+    // console.log(file)
     const ext = path.extname(file.path);
-  
+    
     if (ext !== '.pdf') {
       res.status(400).json({
         message: 'Invalid format',
@@ -47,6 +50,12 @@ router.post('/resume', upload.single('file'), (req: Request, res: Response) => {
             message: 'Error while uploading',
           });
         });
+      }
+    } catch (e) {
+      console.log(e)
+      res.status(400).json({
+        message: 'Error while uploading',
+      });
     }
   });
 

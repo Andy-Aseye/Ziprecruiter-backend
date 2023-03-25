@@ -49,6 +49,7 @@ router.post("/signup", async (req: Request, res: Response) => {
         res.json({
             token: token,
             type: user.type,
+            email: user.email
         });
 
     }
@@ -58,6 +59,7 @@ router.post("/signup", async (req: Request, res: Response) => {
             res.status(400).json({message: "Email already exists"});
         }
         else if (err.name === "ValidationError") {
+            console.log(err)
             await User.deleteOne({ _id: err._id });
             res.status(400).json({ error: err.message });
           } else {

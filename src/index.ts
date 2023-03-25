@@ -2,16 +2,21 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 const app = express();
 require("./DB");
+import cors from "cors";
 
 import bodyParser from 'body-parser';
 
 // Parse incoming request bodies in a middleware before your handlers
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use(cors());
 
 import authRoute from './routes/authRoutes';
 import apiRoutes from './routes/apiRoutes';
+import uploadRoutes from "./routes/uploadRoutes";
+import downloadRoutes from "./routes/downloadRoutes";
+
+
 
 
 
@@ -28,6 +33,8 @@ app.get("/hi", (req: Request, res: Response) => {
 
 app.use("/auth", authRoute);
 app.use("/api", apiRoutes);
+app.use("/upload", uploadRoutes);
+app.use("/host", downloadRoutes);
 
 
 app.use("*", (req: Request, res: Response, next: NextFunction) => {

@@ -14,18 +14,18 @@ let applicantSchema = new mongoose.Schema(
             {
                 institutionName: {
                     type: String,
-                    required: true,
+                    // required: true,
                 },
                 startYear: {
                     type: Number,
-                    required: true,
+                    // required: true,
                     min: 1960,
                     max: new Date().getFullYear(),
                     validate: Number.isInteger,
                 },
                 endYear: {
                     type: Number,
-                    required: true,
+                    // required: true,
                     max: new Date().getFullYear(),
                     // validate: [
                     //     {
