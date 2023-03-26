@@ -39,8 +39,8 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
             education: data.education,
             skills: data.skills,
             yearsOfExperience: data.yearsOfExperience,
-            resume: data.resume,
-            profile: data.profile,
+            resume: data.resume.name,
+            profile: data.profile.name,
         }) : new Recruiter_1.default({
             userId: user._id,
             name: data.name,
@@ -53,6 +53,7 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
         res.json({
             token: token,
             type: user.type,
+            email: user.email
         });
     }
     catch (err) {
@@ -60,6 +61,7 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
             res.status(400).json({ message: "Email already exists" });
         }
         else if (err.name === "ValidationError") {
+            console.log(err);
             yield User_1.default.deleteOne({ _id: err._id });
             res.status(400).json({ error: err.message });
         }
@@ -81,10 +83,11 @@ router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* 
             res.status(401).json({ message: "Incorrect password" });
             return;
         }
-        const token = jsonwebtoken_1.default.sign({ userId: user._id }, JWT_SECRET);
-        res.json({
+        const token = jsonwebtoken_1.default.sign({ _id: user._id, email: user.email, type: user.type }, JWT_SECRET);
+        res.status(200).json({
             token,
-            type: user.type,
+            // user
+            // type: user.type,
         });
     }
     catch (err) {

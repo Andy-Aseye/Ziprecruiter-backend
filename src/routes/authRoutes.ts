@@ -33,8 +33,8 @@ router.post("/signup", async (req: Request, res: Response) => {
             education: data.education,
             skills: data.skills,
             yearsOfExperience: data.yearsOfExperience,
-            resume: data.resume,
-            profile: data.profile,
+            resume: data.resume.name,
+            profile: data.profile.name,
         }) : new Recruiter({
             userId: user._id,
             name: data.name,

@@ -10,54 +10,100 @@ import path from 'path';
 const pipeline = promisify(pipelineCallback);
 const pipelineAsync = promisify(require("stream").pipeline);
 
+
+
 const router = express.Router();
 
 const upload: Multer = multer();
 
-router.post('/resume', upload.single('file'), (req: Request, res: Response) => {
-  try {
 
-    if (!req.file) {
-      res.status(400).json({
-        message: 'File not uploaded',
-      });
-      return;
-    }
-  
-    const file = req.file;
-    // console.log(file)
-    const ext = path.extname(file.path);
-    
-    if (ext !== '.pdf') {
-      res.status(400).json({
-        message: 'Invalid format',
-      });
-    } else {
-      const filename = `${uuidv4()}${ext}`;
-  
-      pipeline(
-        file.stream,
-        fs.createWriteStream(`${__dirname}/../public/resume/${filename}`)
-      )
-        .then(() => {
-          res.send({
-            message: 'File uploaded successfully',
-            url: `/host/resume/${filename}`,
-          });
-        })
-        .catch((err) => {
-          res.status(400).json({
-            message: 'Error while uploading',
-          });
+
+
+router.post('/resume', upload.single('file'), async (req: Request, res: Response) => {
+  if (!req.file) {
+    res.status(400).json({
+      message: 'File not uploaded',
+    });
+    return;
+  }
+
+  const file: Express.Multer.File = req.file;
+  console.log(file);
+  const ext = path.extname(file.originalname);
+
+  if (ext !== '.pdf') {
+    res.status(400).json({
+      message: 'Invalid format',
+    });
+  } else {
+    const filename = `${uuidv4()}${ext}`;
+
+    // console.log(typeof file.stream, file.stream);
+    pipeline(
+      file.stream,
+      fs.createWriteStream(`${__dirname}/../public/resume/${filename}`)
+    )
+      .then(() => {
+        res.send({
+          message: 'File uploaded successfully',
+          url: `/host/resume/${filename}`,
         });
-      }
-    } catch (e) {
-      console.log(e)
-      res.status(400).json({
-        message: 'Error while uploading',
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(400).json({
+          message: 'Error while uploading',
+        });
       });
-    }
-  });
+  }
+});
+
+// router.post('/resume', upload.single('file'), async (req: Request, res: Response) => {
+//   // try {
+
+//     if (!req.file) {
+//       res.status(400).json({
+//         message: 'File not uploaded',
+//       });
+//       return;
+//     }
+  
+//     const file = req.file;
+//     console.log(file)
+//     const ext = path.extname(file.originalname);
+    
+//     if (ext !== '.pdf') {
+//       res.status(400).json({
+//         message: 'Invalid format',
+//       });
+//     } else {
+//       const filename = `${uuidv4()}${ext}`;
+  
+//       console.log(typeof file.stream, file.stream)
+//       pipeline(
+//         file.stream,
+//         fs.createWriteStream(`${__dirname}/../public/resume/${filename}`)
+//       )
+//         .then(() => {
+//           res.send({
+//             message: 'File uploaded successfully',
+//             url: `/host/resume/${filename}`,
+//           });
+//         })
+//         .catch((err) => {
+//           console.log(err);
+//           res.status(400).json({
+//             message: 'Error while uploading',
+//           });
+//         });
+//       }
+    // } catch (e) {
+    //   console.log(e)
+    //   res.status(400).json({
+    //     message: 'Error while uploading',
+    //   });
+    // }
+  // });
 
 
   router.post("/profile", upload.single("file"), async (req: Request, res: Response) => {
@@ -70,7 +116,7 @@ router.post('/resume', upload.single('file'), (req: Request, res: Response) => {
         throw new Error("File is missing");
       }
 
-      const ext = path.extname(file.path);
+      const ext = path.extname(file.originalname);
       if (!file) {
         throw new Error("File is missing");
       }

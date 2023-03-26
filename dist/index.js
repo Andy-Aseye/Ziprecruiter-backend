@@ -7,12 +7,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 require("./DB");
+const cors_1 = __importDefault(require("cors"));
 const body_parser_1 = __importDefault(require("body-parser"));
 // Parse incoming request bodies in a middleware before your handlers
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: true }));
+app.use((0, cors_1.default)());
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const apiRoutes_1 = __importDefault(require("./routes/apiRoutes"));
+const uploadRoutes_1 = __importDefault(require("./routes/uploadRoutes"));
+const downloadRoutes_1 = __importDefault(require("./routes/downloadRoutes"));
 app.get("/", (req, res) => {
     res.send("Hello from typescripts");
     //     const salt = process.env.SALT;
@@ -23,6 +27,8 @@ app.get("/hi", (req, res) => {
 });
 app.use("/auth", authRoutes_1.default);
 app.use("/api", apiRoutes_1.default);
+app.use("/upload", uploadRoutes_1.default);
+app.use("/host", downloadRoutes_1.default);
 app.use("*", (req, res, next) => {
     console.info({
         scope: "Request",

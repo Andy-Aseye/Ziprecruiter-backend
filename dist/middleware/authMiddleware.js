@@ -7,10 +7,11 @@ exports.authenticateToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = __importDefault(require("./config"));
 const authenticateToken = (req, res, next) => {
-    var _a;
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) {
+    // const authHeader = req.headers.authorization;
+    const tokenBearer = req.headers.token;
+    const token = tokenBearer.split(" ")[1];
+    // console.log(tokenJ);
+    if (!tokenBearer) {
         return res.status(401).send('Missing authorization token');
     }
     try {
@@ -19,14 +20,15 @@ const authenticateToken = (req, res, next) => {
             throw new Error("Invalid JWT payload");
         }
         const userPayload = {
-            id: decoded._id,
+            id: decoded.userId,
             email: decoded.email,
-            type: (_a = req.user) === null || _a === void 0 ? void 0 : _a.type
+            type: decoded.type,
         };
         req.user = userPayload;
         next();
     }
     catch (err) {
+        console.log(err);
         return res.status(403).send('Invalid authorization token');
     }
 };

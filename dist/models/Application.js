@@ -27,7 +27,7 @@ let appicationSchema = new mongoose_1.default.Schema({
         type: Date,
         default: Date.now,
     },
-    dateofJoining: {
+    dateOfJoining: {
         type: Date,
         // validate: [
         //     {

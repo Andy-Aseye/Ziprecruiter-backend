@@ -33,11 +33,15 @@ UserSchema.pre("save", function (next) {
     if (!user.isModified("password")) {
         return next();
     }
-    bcrypt_1.default.hash(user.password, salt, (err, hash) => {
+    bcrypt_1.default.genSalt(10, function (err, salt) {
         if (err)
             return next(err);
-        user.password = hash;
-        next();
+        bcrypt_1.default.hash(user.password, salt, (err, hash) => {
+            if (err)
+                return next(err);
+            user.password = hash;
+            next();
+        });
     });
 });
 const UserAuth = mongoose_1.default.model('UserAuth', UserSchema);
