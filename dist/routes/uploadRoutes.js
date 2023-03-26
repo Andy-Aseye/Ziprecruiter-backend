@@ -17,9 +17,10 @@ const multer_1 = __importDefault(require("multer"));
 const fs_1 = __importDefault(require("fs"));
 const uuid_1 = require("uuid");
 const util_1 = require("util");
+const promises_1 = require("stream/promises");
 const stream_1 = require("stream");
 const path_1 = __importDefault(require("path"));
-const pipeline = (0, util_1.promisify)(stream_1.pipeline);
+// const pipeline = promisify(pipelineCallback);
 const pipelineAsync = (0, util_1.promisify)(require("stream").pipeline);
 const router = express_1.default.Router();
 const upload = (0, multer_1.default)();
@@ -40,20 +41,31 @@ router.post('/resume', upload.single('file'), (req, res) => __awaiter(void 0, vo
     }
     else {
         const filename = `${(0, uuid_1.v4)()}${ext}`;
-        console.log(typeof file.stream, file.stream);
-        pipeline(file.stream, fs_1.default.createWriteStream(`${__dirname}/../public/resume/${filename}`))
-            .then(() => {
+        try {
+            yield (0, promises_1.pipeline)(stream_1.Readable.from(file.buffer), fs_1.default.createWriteStream(`${__dirname}/../public/resume/${filename}`));
             res.send({
                 message: 'File uploaded successfully',
                 url: `/host/resume/${filename}`,
             });
-        })
-            .catch((err) => {
+        }
+        catch (err) {
             console.log(err);
             res.status(400).json({
                 message: 'Error while uploading',
             });
-        });
+        }
+        // .then(() => {
+        //   res.send({
+        //     message: 'File uploaded successfully',
+        //     url: `/host/resume/${filename}`,
+        //   });
+        // })
+        // .catch((err) => {
+        //   console.log(err);
+        //   res.status(400).json({
+        //     message: 'Error while uploading',
+        //   });
+        // });
     }
 }));
 // router.post('/resume', upload.single('file'), async (req: Request, res: Response) => {
