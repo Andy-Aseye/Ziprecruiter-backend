@@ -3,11 +3,12 @@ import multer, {Multer} from 'multer';
 import fs from 'fs';
 import {v4 as uuidv4} from 'uuid';
 import { promisify } from 'util';
-import { pipeline as pipelineCallback } from 'stream';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 import path from 'path';
 
 
-const pipeline = promisify(pipelineCallback);
+// const pipeline = promisify(pipelineCallback);
 const pipelineAsync = promisify(require("stream").pipeline);
 
 
@@ -37,24 +38,34 @@ router.post('/resume', upload.single('file'), async (req: Request, res: Response
     });
   } else {
     const filename = `${uuidv4()}${ext}`;
-
-    // console.log(typeof file.stream, file.stream);
-    pipeline(
-      file.stream,
-      fs.createWriteStream(`${__dirname}/../public/resume/${filename}`)
-    )
-      .then(() => {
-        res.send({
-          message: 'File uploaded successfully',
-          url: `/host/resume/${filename}`,
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-        res.status(400).json({
-          message: 'Error while uploading',
-        });
+    try {
+      await pipeline(
+        Readable.from(file.buffer),
+        fs.createWriteStream(`${__dirname}/../public/resume/${filename}`)
+      )
+      res.send({
+        message: 'File uploaded successfully',
+        url: `/host/resume/${filename}`,
       });
+
+    } catch (err) {
+      console.log(err)
+      res.status(400).json({
+        message: 'Error while uploading',
+      });
+    }
+      // .then(() => {
+      //   res.send({
+      //     message: 'File uploaded successfully',
+      //     url: `/host/resume/${filename}`,
+      //   });
+      // })
+      // .catch((err) => {
+      //   console.log(err);
+      //   res.status(400).json({
+      //     message: 'Error while uploading',
+      //   });
+      // });
   }
 });
 
