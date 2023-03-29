@@ -11,14 +11,9 @@ import path from 'path';
 // const pipeline = promisify(pipelineCallback);
 const pipelineAsync = promisify(require("stream").pipeline);
 
-
-
 const router = express.Router();
 
 const upload: Multer = multer();
-
-
-
 
 router.post('/resume', upload.single('file'), async (req: Request, res: Response) => {
   if (!req.file) {
@@ -29,7 +24,7 @@ router.post('/resume', upload.single('file'), async (req: Request, res: Response
   }
 
   const file: Express.Multer.File = req.file;
-  console.log(file);
+  // console.log(file);
   const ext = path.extname(file.originalname);
 
   if (ext !== '.pdf') {
