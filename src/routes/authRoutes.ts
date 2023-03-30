@@ -6,6 +6,7 @@ import Recruiter from "../models/Recruiter";
 import JobApplicant from "../models/JobApplicant";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import config from "../middleware/config";
 
 dotenv.config();
 
@@ -45,7 +46,7 @@ router.post("/signup", async (req: Request, res: Response) => {
 
         await userDetails.save();
 
-        const token = jwt.sign({_id: user._id}, authKeys.jwtSecretKey, {expiresIn: "4h"});
+        const token = jwt.sign({_id: user._id, type: user.type, email: user.email }, config.jwtSecret, {expiresIn: "8h"});
         res.json({
             token: token,
             type: user.type,

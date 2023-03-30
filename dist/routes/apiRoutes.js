@@ -54,7 +54,7 @@ router.post("/jobs", authMiddleware_1.authenticateToken, (req, res) => __awaiter
             });
             return;
         }
-        if (user.type != "recruiter") {
+        if (user.type !== "recruiter") {
             res.status(401).json({
                 message: "You don't have permission to add jobs",
             });
@@ -62,19 +62,15 @@ router.post("/jobs", authMiddleware_1.authenticateToken, (req, res) => __awaiter
         }
         // This code runs meaning the user is a recruiter. We set the data to the inputs sent from the add job form in the frontend
         const data = req.body;
+        console.log(data);
         let job = new Job_1.default({
-            // userId is the id of the recruiter this implies the job schema stores the recruiter details as well 
             userId: user.id,
             title: data.title,
-            maxApplicants: data.maxApplicants,
-            maxPositions: data.maxPositions,
-            dateOfPosting: data.dateOfPosting,
-            deadline: data.deadline,
-            skillsets: data.skillsets,
+            description: data.description,
+            skills: data.skills,
             jobType: data.jobType,
             duration: data.duration,
             salary: data.salary,
-            rating: data.rating,
         });
         yield job.save();
         res.json({ message: "Job added successfully to the database" });
@@ -266,14 +262,14 @@ router.put("/jobs/:id", authMiddleware_1.authenticateToken, (req, res) => __awai
             return;
         }
         const data = req.body;
-        if (data.maxApplicants) {
-            job.maxApplicants = data.maxApplicants;
+        if (data.salary) {
+            job.salary = data.salary;
         }
-        if (data.maxPositions) {
-            job.maxPositions = data.maxPositions;
+        if (data.duration) {
+            job.duration = data.duration;
         }
         if (data.deadline) {
-            job.deadline = data.deadline;
+            job.title = data.title;
         }
         yield job.save();
         res.json({
@@ -499,23 +495,23 @@ router.post("/jobs/:id/applications", authMiddleware_1.authenticateToken, (req, 
             });
         }
         // Get the count of active applications for the job
-        const activeApplicationCount = yield Application_1.default.countDocuments({
-            jobId: jobId,
-            status: {
-                $nin: ["rejected", "deleted", "cancelled", "finished"],
-            },
-        });
-        if (!job.maxApplicants) {
-            res.json({
-                message: "Max applicants is equal to null"
-            });
-            return;
-        }
-        if (activeApplicationCount >= job.maxApplicants) {
-            return res.status(400).json({
-                message: "The maximum number of applications has been reached",
-            });
-        }
+        // const activeApplicationCount = await Application.countDocuments({
+        //     jobId: jobId,
+        //     status: {
+        //       $nin: ["rejected", "deleted", "cancelled", "finished"],
+        //     },
+        //   });
+        //   if(!job.maxApplicants) {
+        //     res.json({
+        //         message: "Max applicants is equal to null"
+        //     });
+        //     return;
+        //   }
+        //   if(activeApplicationCount >= job.maxApplicants) {
+        //     return res.status(400).json({
+        //         message: "The maximum number of applications has been reached",
+        //     });
+        //   }
         // Get the count of the user's active applications
         const myActiveApplicantCount = yield Application_1.default.countDocuments({
             userId: user.id,
@@ -684,23 +680,23 @@ router.put("/appications/:id", authMiddleware_1.authenticateToken, (req, res) =>
                     });
                     return;
                 }
-                const activeApplicationCount = yield Application_1.default.countDocuments({
-                    recruiterId: user.id,
-                    jobId: job._id,
-                    status: "accepted",
-                }).exec();
-                if (!job || job.maxPositions === undefined) {
-                    res.status(404).json({
-                        message: "Job does not exist or max positions is undefined",
-                    });
-                    return;
-                }
-                if (activeApplicationCount >= job.maxPositions) {
-                    res.status(400).json({
-                        message: "All positions for this job are already filled",
-                    });
-                    return;
-                }
+                // const activeApplicationCount = await Application.countDocuments({
+                //     recruiterId: user.id,
+                //     jobId: job._id,
+                //     status: "accepted",
+                // }).exec();
+                // if (!job || job.maxPositions === undefined) {
+                //     res.status(404).json({
+                //         message: "Job does not exist or max positions is undefined",
+                //     });
+                //     return;
+                // }
+                // if(activeApplicationCount >= job.maxPositions) {
+                //     res.status(400).json({
+                //         message: "All positions for this job are already filled",
+                //     });
+                //     return;
+                // }
                 application.status = status;
                 if (dateOfJoining) {
                     application.dateOfJoining = new Date(dateOfJoining);
@@ -729,11 +725,13 @@ router.put("/appications/:id", authMiddleware_1.authenticateToken, (req, res) =>
                     yield Job_1.default.findByIdAndUpdate({
                         _id: job.id,
                         userId: user.id,
-                    }, {
-                        $set: {
-                            acceptedCandidates: activeApplicationCount + 1,
-                        },
-                    }).exec();
+                    }
+                    // {
+                    //     $set: {
+                    //         acceptedCandidates: activeApplicationCount + 1,
+                    //     },
+                    // }
+                    ).exec();
                 }
                 res.json({
                     message: `Application ${status} successfully`,

@@ -14,12 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const authKeys_1 = __importDefault(require("../controllers2/authKeys"));
 const User_1 = __importDefault(require("../models/User"));
 const Recruiter_1 = __importDefault(require("../models/Recruiter"));
 const JobApplicant_1 = __importDefault(require("../models/JobApplicant"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const config_1 = __importDefault(require("../middleware/config"));
 dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 const router = express_1.default.Router();
@@ -49,7 +49,7 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
             contactNumber: data.contactNumber,
         });
         yield userDetails.save();
-        const token = jsonwebtoken_1.default.sign({ _id: user._id }, authKeys_1.default.jwtSecretKey, { expiresIn: "4h" });
+        const token = jsonwebtoken_1.default.sign({ _id: user._id, type: user.type, email: user.email }, config_1.default.jwtSecret, { expiresIn: "8h" });
         res.json({
             token: token,
             type: user.type,
