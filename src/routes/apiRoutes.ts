@@ -9,14 +9,15 @@ import Application from "../models/Application"
 import UserAuth from "../models/User";
 // import { QueryString } from 'qs';
 import QueryString = require("qs");
-
+import validate from "../middleware/validator";
+import { editApplicationSchema, editJobSchema, editUserSchema, postJobSchema } from "../validators/apiRoutesValidators";
 
 
 const router = express.Router();
 
 // First let me create a route to add jobs. this should only be allow by recruiter type users.
 
-router.post("/jobs", authenticateToken, async (req: Request, res: Response) => {
+router.post("/jobs", authenticateToken, validate(postJobSchema), async (req: Request, res: Response) => {
     try {
         const user = req.user;
 
@@ -293,7 +294,7 @@ router.get("/jobs/:id", authenticateToken, async (req: Request, res: Response) =
 
 // Update a job information
 
-router.put("/jobs/:id", authenticateToken, async (req: Request, res: Response) => {
+router.put("/jobs/:id", authenticateToken, validate(editJobSchema), async (req: Request, res: Response) => {
     
     const user = req.user;
  try {
@@ -469,7 +470,7 @@ router.get("/user/:id", authenticateToken, async(req: Request, res: Response) =>
 
 
 // update user details
-router.put("/user", authenticateToken, async (req: Request, res: Response) => {
+router.put("/user", authenticateToken, validate(editUserSchema), async (req: Request, res: Response) => {
     try{
         // We set the user to the data from the user
     // We set the data to the data from the frontend in the form of body
@@ -791,7 +792,7 @@ router.get("/applications", authenticateToken, async(req: Request, res: Response
 
 
 // update status of application to a job
-router.put("/appications/:id", authenticateToken, async (req: Request, res: Response) => {
+router.put("/appications/:id", validate(editApplicationSchema), authenticateToken, async (req: Request, res: Response) => {
     const user = req.user;
   const id = req.params.id;
   const status = req.body.status;
