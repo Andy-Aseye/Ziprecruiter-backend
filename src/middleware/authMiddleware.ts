@@ -21,12 +21,12 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // const authHeader = req.headers.authorization;
     const tokenBearer = req.headers.authorization as string;
     
-    const token = tokenBearer.split(" ")[1];
-    console.log(token);
-
     if(!tokenBearer) {
         return res.status(401).send('Missing authorization token')
     }
+    
+    const token = tokenBearer.split(" ")[1];
+
 
     try {
         const decoded = jwt.verify(token, config.jwtSecret);
