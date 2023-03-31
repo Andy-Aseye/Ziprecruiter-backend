@@ -65,10 +65,10 @@ router.post(
         userId,
         name,
         education,
-        skills,
+        skills: JSON.parse(skills),
         yearsOfExperience: Number(yearsOfExperience),
         resume,
-        coverLetter,
+        coverletter: coverLetter,
       });
       await applicant.save();
       const token = jwt.sign(
