@@ -8,7 +8,7 @@ import Job from "../models/Job";
 import Application from "../models/Application"
 import UserAuth from "../models/User";
 // import { QueryString } from 'qs';
-import QueryString = require("qs")
+import QueryString = require("qs");
 
 
 
@@ -56,6 +56,23 @@ router.post("/jobs", authenticateToken, async (req: Request, res: Response) => {
 
 })
 
+
+
+//Find jobs of a recruiter.
+
+
+router.get("/jobs/recruiter", authenticateToken, async (req: Request, res: Response) => {
+    try {
+
+        const user = req.user;
+        const recruiterJobs = await Job.find({userId: user?.id});
+        res.status(200).json(recruiterJobs);
+    }
+
+    catch(err) {
+        res.status(400).json("Error while fetching recruiter jobs")
+    }
+})
 
 // Creating a route to acces all jobs.
 
