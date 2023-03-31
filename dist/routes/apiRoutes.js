@@ -43,9 +43,11 @@ const JobApplicant_1 = __importDefault(require("../models/JobApplicant"));
 const Recruiter_1 = __importDefault(require("../models/Recruiter"));
 const Job_1 = __importDefault(require("../models/Job"));
 const Application_1 = __importDefault(require("../models/Application"));
+const validator_1 = __importDefault(require("../middleware/validator"));
+const apiRoutesValidators_1 = require("../validators/apiRoutesValidators");
 const router = express_1.default.Router();
 // First let me create a route to add jobs. this should only be allow by recruiter type users.
-router.post("/jobs", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/jobs", authMiddleware_1.authenticateToken, (0, validator_1.default)(apiRoutesValidators_1.postJobSchema), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const user = req.user;
         if (!user) {
@@ -233,7 +235,7 @@ router.get("/jobs", authMiddleware_1.authenticateToken, (req, res) => {
 // to get info about a particular job
 router.get("/jobs/:id", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const job = yield Job_1.default.findOne({ _id: req.params.id });
+        const job = yield Job_1.default.findOne({ _id: req.params._id });
         if (job == null) {
             res.status(400).json({
                 message: "Job does not exist",
@@ -247,7 +249,7 @@ router.get("/jobs/:id", authMiddleware_1.authenticateToken, (req, res) => __awai
     }
 }));
 // Update a job information
-router.put("/jobs/:id", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put("/jobs/:id", authMiddleware_1.authenticateToken, (0, validator_1.default)(apiRoutesValidators_1.editJobSchema), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
     try {
         if (!user) {
@@ -393,7 +395,7 @@ router.get("/user/:id", authMiddleware_1.authenticateToken, (req, res) => __awai
     }
 }));
 // update user details
-router.put("/user", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put("/user", authMiddleware_1.authenticateToken, (0, validator_1.default)(apiRoutesValidators_1.editUserSchema), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // We set the user to the data from the user
         // We set the data to the data from the frontend in the form of body
@@ -654,7 +656,7 @@ router.get("/applications", authMiddleware_1.authenticateToken, (req, res) => __
     }
 }));
 // update status of application to a job
-router.put("/appications/:id", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.put("/appications/:id", (0, validator_1.default)(apiRoutesValidators_1.editApplicationSchema), authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
     const id = req.params.id;
     const status = req.body.status;

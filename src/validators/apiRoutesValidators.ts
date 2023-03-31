@@ -4,7 +4,7 @@ export const postJobSchema = yup.object({
   body: yup.object({
     title: yup.string().required(),
     description: yup.string().required(),
-    skills: yup.string().required(),
+    skills: yup.array().of(yup.string()).required(),
     jobType: yup.string().required(),
     duration: yup.string().required(),
     salary: yup.string().required(),
