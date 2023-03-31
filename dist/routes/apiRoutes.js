@@ -79,6 +79,17 @@ router.post("/jobs", authMiddleware_1.authenticateToken, (req, res) => __awaiter
         res.status(400).json(error);
     }
 }));
+//Find jobs of a recruiter.
+router.get("/jobs/recruiter", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const user = req.user;
+        const recruiterJobs = yield Job_1.default.find({ userId: user === null || user === void 0 ? void 0 : user.id });
+        res.status(200).json(recruiterJobs);
+    }
+    catch (err) {
+        res.status(400).json("Error while fetching recruiter jobs");
+    }
+}));
 // Creating a route to acces all jobs.
 router.get("/jobs", authMiddleware_1.authenticateToken, (req, res) => {
     try {
