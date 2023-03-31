@@ -9,11 +9,10 @@ const config_1 = __importDefault(require("./config"));
 const authenticateToken = (req, res, next) => {
     // const authHeader = req.headers.authorization;
     const tokenBearer = req.headers.authorization;
-    const token = tokenBearer.split(" ")[1];
-    console.log(token);
     if (!tokenBearer) {
         return res.status(401).send('Missing authorization token');
     }
+    const token = tokenBearer.split(" ")[1];
     try {
         const decoded = jsonwebtoken_1.default.verify(token, config_1.default.jwtSecret);
         console.log(decoded);

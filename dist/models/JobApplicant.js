@@ -45,16 +45,16 @@ let applicantSchema = new mongoose_1.default.Schema({
     //         },
     //     },
     // ],
-    // education: Number,
+    education: String,
     // I'm storing each skill as a string and returning skills as an array of strings of skills.
     skills: [String],
     // rating: {
     // }
-    // yearsOfExperience: {
-    //     type: Number,
-    //     required: true,
-    //     default: "Not specified"
-    // },
+    yearsOfExperience: {
+        type: Number,
+        required: true,
+        default: 0
+    },
     resume: {
         type: String,
     },

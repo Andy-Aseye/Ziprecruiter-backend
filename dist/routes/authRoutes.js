@@ -20,77 +20,107 @@ const JobApplicant_1 = __importDefault(require("../models/JobApplicant"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const config_1 = __importDefault(require("../middleware/config"));
+const multer_1 = __importDefault(require("multer"));
+const upload_1 = require("../services/upload");
+const types_1 = __importDefault(require("../types"));
+const authRoutesValidators_1 = require("../validators/authRoutesValidators");
+const validator_1 = __importDefault(require("../middleware/validator"));
+const upload = (0, multer_1.default)();
 dotenv_1.default.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 const router = express_1.default.Router();
 // Here we signup the user by storing req data into the schema model.
-router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = req.body;
+router.post("/signup/applicant", upload.fields([
+    { name: "resume", maxCount: 1 },
+    { name: "coverLetter", maxCount: 1 },
+]), (0, validator_1.default)(authRoutesValidators_1.signupApplicantSchema), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    if (req.files == undefined) {
+        next(new types_1.default(400, "Resume and cover letter are both required"));
+        return;
+    }
+    // @ts-ignore
+    let resumeFile = req.files["resume"];
+    // @ts-ignore
+    let coverLetterFile = req.files["coverLetter"];
+    if (resumeFile == undefined || coverLetterFile == undefined) {
+        next(new types_1.default(400, "Resume and cover letter are both required"));
+        return;
+    }
     try {
-        const user = new User_1.default({
-            email: data.email,
-            password: data.password,
-            type: data.type,
+        const { email, password, name, education, skills, yearsOfExperience } = req.body;
+        const existingUserWithSameEmail = yield User_1.default.exists({ email });
+        if (existingUserWithSameEmail) {
+            next(new types_1.default(400, "User with this email already exists"));
+            return;
+        }
+        const resume = yield (0, upload_1.uploadDocument)(resumeFile[0]);
+        const coverLetter = yield (0, upload_1.uploadDocument)(coverLetterFile[0]);
+        const user = new User_1.default({ email, password, type: "applicant" });
+        const { _id: userId } = yield user.save();
+        const applicant = new JobApplicant_1.default({
+            userId,
+            name,
+            education,
+            skills,
+            yearsOfExperience: Number(yearsOfExperience),
+            resume,
+            coverLetter,
         });
-        yield user.save();
-        const userDetails = user.type === "applicant" ? new JobApplicant_1.default({
-            userId: user._id,
-            name: data.name,
-            // education: data.education,
-            skills: data.skills,
-            resume: data.resume.name,
-            coverletter: data.coverletter.name,
-        }) : new Recruiter_1.default({
-            userId: user._id,
-            name: data.name,
-            organization: data.organization,
-            position: data.position,
-            contactNumber: data.contactNumber,
-        });
-        yield userDetails.save();
+        yield applicant.save();
         const token = jsonwebtoken_1.default.sign({ _id: user._id, type: user.type, email: user.email }, config_1.default.jwtSecret, { expiresIn: "8h" });
-        res.json({
-            token: token,
-            type: user.type,
-            email: user.email
-        });
+        res
+            .status(201)
+            .json({ token: token, type: user.type, email: user.email });
     }
     catch (err) {
-        if (err.code === 11000) {
-            res.status(400).json({ message: "Email already exists" });
-        }
-        else if (err.name === "ValidationError") {
-            console.log(err);
-            yield User_1.default.deleteOne({ _id: err._id });
-            res.status(400).json({ error: err.message });
-        }
-        else {
-            res.status(500).json({ error: err.message });
-        }
+        next(err);
     }
 }));
-router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/signup/recruiter", (0, validator_1.default)(authRoutesValidators_1.signupRecruiterSchema), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password, name, organization, position, contactNumber } = req.body;
+    try {
+        const existingUserWithSameEmail = yield User_1.default.exists({ email });
+        if (existingUserWithSameEmail) {
+            next(new types_1.default(400, "User with this email already exists"));
+            return;
+        }
+        const user = new User_1.default({ email, password, type: "recruiter" });
+        const { _id: userId } = yield user.save();
+        const recruiter = new Recruiter_1.default({
+            userId,
+            name,
+            organization,
+            position,
+            contactNumber,
+        });
+        yield recruiter.save();
+        const token = jsonwebtoken_1.default.sign({ _id: userId, type: user.type, email }, config_1.default.jwtSecret, { expiresIn: "8h" });
+        res.status(201).json({ token, type: user.type, email });
+    }
+    catch (err) {
+        next(err);
+    }
+}));
+router.post("/login", (0, validator_1.default)(authRoutesValidators_1.loginSchema), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
         const user = yield User_1.default.findOne({ email });
-        if (!user) {
-            res.status(401).json({ message: "Email does not exist" });
+        if (user == null) {
+            next(new types_1.default(401, "Wrong email or password"));
             return;
         }
         const passwordMatch = yield bcrypt_1.default.compare(password, user.password);
         if (!passwordMatch) {
-            res.status(401).json({ message: "Incorrect password" });
+            next(new types_1.default(401, "Wrong email or password"));
             return;
         }
         const token = jsonwebtoken_1.default.sign({ _id: user._id, email: user.email, type: user.type }, JWT_SECRET);
-        res.status(200).json({
+        res.json({
             token,
-            // user
-            // type: user.type,
         });
     }
     catch (err) {
-        res.status(500).json({ message: "Internal server error in login" });
+        next(err);
     }
 }));
 exports.default = module.exports = router;

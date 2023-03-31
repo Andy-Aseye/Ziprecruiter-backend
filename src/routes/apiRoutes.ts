@@ -278,7 +278,7 @@ router.get("/jobs", authenticateToken, (req: Request, res: Response) => {
 router.get("/jobs/:id", authenticateToken, async (req: Request, res: Response) => {
 
     try {
-        const job = await Job.findOne({_id: req.params._id});
+        const job = await Job.findOne({_id: req.params.id});
 
         if (job == null) {
             res.status(400).json({
