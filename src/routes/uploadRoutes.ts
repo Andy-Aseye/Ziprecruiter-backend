@@ -8,6 +8,7 @@ const upload: Multer = multer();
 
 router.post('/resume', upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log(req.file)
     const filename = await uploadDocument(req.file)
     res.send({
       message: 'Resume uploaded successfully',
@@ -21,6 +22,7 @@ router.post('/resume', upload.single('file'), async (req: Request, res: Response
 
 router.post("/cover-letter", upload.single("file"), async (req: Request, res: Response, next) => {
   try {
+    console.log(req.file)
     const filename = await uploadDocument(req.file)
     res.send({
       message: 'Cover letter uploaded successfully',

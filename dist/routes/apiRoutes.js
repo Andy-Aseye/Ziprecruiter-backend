@@ -434,7 +434,7 @@ router.put("/user", authMiddleware_1.authenticateToken, (req, res) => __awaiter(
         }
         else {
             //  The logic here is that if the user is not a recruiter, then he is a user.
-            // We search throughg the Jobapplicant documents and find a document with the same id.
+            // We search through the Jobapplicant documents and find a document with the same id.
             const jobApplicant = yield JobApplicant_1.default.findOne({ userId: user.id });
             if (jobApplicant == null) {
                 res.status(404).json({
@@ -446,17 +446,14 @@ router.put("/user", authMiddleware_1.authenticateToken, (req, res) => __awaiter(
             if (data.name) {
                 jobApplicant.name = data.name;
             }
-            if (data.education) {
-                jobApplicant.education = data.education;
-            }
             if (data.skills) {
                 jobApplicant.skills = data.skills;
             }
             if (data.resume) {
                 jobApplicant.resume = data.resume;
             }
-            if (data.profile) {
-                jobApplicant.profile = data.profile;
+            if (data.coverletter) {
+                jobApplicant.coverletter = data.coverletter;
             }
             yield jobApplicant.save();
             res.json({

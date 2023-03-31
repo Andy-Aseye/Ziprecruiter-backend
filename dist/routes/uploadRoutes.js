@@ -19,6 +19,7 @@ const router = express_1.default.Router();
 const upload = (0, multer_1.default)();
 router.post('/resume', upload.single('file'), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log(req.file);
         const filename = yield (0, upload_1.uploadDocument)(req.file);
         res.send({
             message: 'Resume uploaded successfully',
@@ -31,6 +32,7 @@ router.post('/resume', upload.single('file'), (req, res, next) => __awaiter(void
 }));
 router.post("/cover-letter", upload.single("file"), (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log(req.file);
         const filename = yield (0, upload_1.uploadDocument)(req.file);
         res.send({
             message: 'Cover letter uploaded successfully',

@@ -31,11 +31,10 @@ router.post("/signup", async (req: Request, res: Response) => {
         const userDetails = user.type === "applicant"? new JobApplicant({
             userId: user._id,
             name: data.name,
-            education: data.education,
+            // education: data.education,
             skills: data.skills,
-            yearsOfExperience: data.yearsOfExperience,
             resume: data.resume.name,
-            profile: data.profile.name,
+            coverletter: data.coverletter.name,
         }) : new Recruiter({
             userId: user._id,
             name: data.name,

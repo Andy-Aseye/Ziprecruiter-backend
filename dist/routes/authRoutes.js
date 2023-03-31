@@ -36,11 +36,10 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
         const userDetails = user.type === "applicant" ? new JobApplicant_1.default({
             userId: user._id,
             name: data.name,
-            education: data.education,
+            // education: data.education,
             skills: data.skills,
-            yearsOfExperience: data.yearsOfExperience,
             resume: data.resume.name,
-            profile: data.profile.name,
+            coverletter: data.coverletter.name,
         }) : new Recruiter_1.default({
             userId: user._id,
             name: data.name,
