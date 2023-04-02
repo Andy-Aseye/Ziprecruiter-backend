@@ -126,7 +126,7 @@ router.post(
   validate(loginSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { email, password } = req.body;
+      const {type, email, password } = req.body;
 
       const user = await User.findOne({ email });
       if (user == null) {
@@ -146,6 +146,7 @@ router.post(
       );
       res.json({
         token,
+        type
       });
     } catch (err) {
       next(err);

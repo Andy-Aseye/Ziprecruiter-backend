@@ -7,6 +7,7 @@ export const postJobSchema = yup.object({
     skills: yup.array().of(yup.string()).required(),
     jobType: yup.string().required(),
     duration: yup.string().required(),
+    location: yup.string().notRequired(),
     salary: yup.string().required(),
   })
 })
@@ -14,6 +15,8 @@ export const postJobSchema = yup.object({
 export const editJobSchema = yup.object({
   body: yup.object({
     salary: yup.string().notRequired(),
+    skills: yup.array().of(yup.string()).notRequired(),
+    location: yup.string().notRequired(),
     duration: yup.string().notRequired(),
     deadline: yup.string().notRequired()
   }),

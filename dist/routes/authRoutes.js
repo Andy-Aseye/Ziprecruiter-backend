@@ -61,10 +61,10 @@ router.post("/signup/applicant", upload.fields([
             userId,
             name,
             education,
-            skills,
+            skills: JSON.parse(skills),
             yearsOfExperience: Number(yearsOfExperience),
             resume,
-            coverLetter,
+            coverletter: coverLetter,
         });
         yield applicant.save();
         const token = jsonwebtoken_1.default.sign({ _id: user._id, type: user.type, email: user.email }, config_1.default.jwtSecret, { expiresIn: "8h" });

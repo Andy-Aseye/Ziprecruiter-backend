@@ -23,6 +23,16 @@ let appicationSchema = new mongoose_1.default.Schema({
         default: "applied",
         required: true,
     },
+    title: {
+        type: String,
+        required: true,
+    },
+    salary: {
+        type: String,
+    },
+    jobType: {
+        type: String
+    },
     dateApplied: {
         type: Date,
         default: Date.now,

@@ -60,8 +60,6 @@ router.post("/jobs", authenticateToken, validate(postJobSchema), async (req: Req
 
 
 //Find jobs of a recruiter.
-
-
 router.get("/jobs/recruiter", authenticateToken, async (req: Request, res: Response) => {
     try {
 
@@ -75,7 +73,9 @@ router.get("/jobs/recruiter", authenticateToken, async (req: Request, res: Respo
     }
 })
 
-// Creating a route to acces all jobs.
+
+
+// Creating a route to access all jobs (based on filter).
 
 router.get("/jobs", authenticateToken, (req: Request, res: Response) => {
     try{
@@ -92,12 +92,12 @@ router.get("/jobs", authenticateToken, (req: Request, res: Response) => {
           }
 
 
-        if(user.type === "recruiter" && req.query.myjobs) {
-            findParams = {
-                ...findParams,
-                userId: user.id,
-            };
-        }
+        // if(user.type === "recruiter" && req.query.myjobs) {
+        //     findParams = {
+        //         ...findParams,
+        //         userId: user.id,
+        //     };
+        // }
 
         if(req.query.q) {
             findParams = {
@@ -179,40 +179,22 @@ router.get("/jobs", authenticateToken, (req: Request, res: Response) => {
             };
         }
 
-        // Let's handle job search request according to order
-
-        if (req.query.asc) {
-            if (Array.isArray(req.query.asc)) {
-                req.query.asc.map((key) => {
-                    sortParams = {
-                        ...sortParams,
-                        [key as string]: 1,
-                    };
-                });
-            } else {
-                sortParams = {
-                    ...sortParams,
-                    [req.query.asc as string]: 1,
-                };
-            }
-        }
-
         // Creating a block to handle a filtered request that states the minimum salary
-        if (req.query.desc) {
-            if (Array.isArray(req.query.desc)) {
-                req.query.desc.map((key) => {
-                    sortParams = {
-                        ...sortParams,
-                        [key as string]: -1,
-                    };
-                });
-            } else{
-                sortParams = {
-                    ...sortParams,
-                    [req.query.desc as string]: -1,
-                };
-            }
-        }
+        // if (req.query.desc) {
+        //     if (Array.isArray(req.query.desc)) {
+        //         req.query.desc.map((key) => {
+        //             sortParams = {
+        //                 ...sortParams,
+        //                 [key as string]: -1,
+        //             };
+        //         });
+        //     } else{
+        //         sortParams = {
+        //             ...sortParams,
+        //             [req.query.desc as string]: -1,
+        //         };
+        //     }
+        // }
 
         console.log(findParams);
         console.log(sortParams);
@@ -326,14 +308,23 @@ router.put("/jobs/:id", authenticateToken, validate(editJobSchema), async (req: 
         }
 
         const data = req.body;
-        if (data.salary) {
-            job.salary = data.salary;
+        if (data.title) {
+            job.title = data.title;
+        }
+        if (data.skills) {
+            job.skills = data.skills;
+        }
+        if (data.description) {
+            job.description = data.description;
+        }
+        if (data.location) {
+            job.location = data.location;
         }
         if (data.duration) {
             job.duration = data.duration;
         }
-        if (data.deadline) {
-            job.title = data.title;
+        if (data.jobType) {
+            job.jobType = data.jobType;
         }
 
         await job.save();
@@ -651,6 +642,9 @@ router.post("/jobs/:id/applications", authenticateToken, async (req: Request, re
         recruiterId: job.userId,
         jobId: job.id,
         status: "applied",
+        title: job.title,
+        salary: job.salary,
+        jobType: job.jobType,
     });
 
     await application.save();
@@ -674,53 +668,117 @@ interface IQueryParams {
     limit?: number;
   }
 
+//   To view applications of a particular job
+// router.get("/jobs/:id/applications", authenticateToken, async (req: Request, res: Response) => {
+//     const user = req.user;
+//      if (!user) {
+//         res.status(404).json({
+//           message: "User not found",
+//         });
+//         return;
+//       }
+
+//       interface IFindParams {
+//         jobId: string;
+//         recruiterId: string;
+//         status?: string;
+//       }
+
+//       if(user.type !== "recruiter") {
+//         return res.status(401).json({
+//             message: "You don't have permission to view job applications",
+//         });
+//       }
+//       const jobId = req.params.id;
+
+//       let findParams: IFindParams = {
+//         jobId: jobId,
+//         recruiterId: user.id,
+//       }
+
+//       let sortParams = {};
+
+//       const queryParams: IQueryParams = req.query;
+
+//       if (queryParams.status) {
+//         findParams = {
+//             ...findParams,
+//             status: queryParams.status,
+//         };
+//       }
+
+//       try {
+//         const applications = await Application.find(findParams).collation({locale: "en"}).sort(sortParams).exec();
+
+//         res.json(applications);
+//       } catch (err) {
+//         res.status(400).json(err);
+//       }
+// });
+
+
 router.get("/jobs/:id/applications", authenticateToken, async (req: Request, res: Response) => {
     const user = req.user;
-     if (!user) {
-        res.status(404).json({
-          message: "User not found",
-        });
-        return;
-      }
+   
 
-      interface IFindParams {
-        jobId: string;
-        recruiterId: string;
-        status?: string;
-      }
+    if (!user) {
+      res.status(404).json({
+        message: "User not found",
+      });
+      return;
+    }
+    const jobId = new mongoose.Types.ObjectId(req.params.id);
+    const userId = new mongoose.Types.ObjectId(user.id);
+    if (user.type !== "recruiter") {
+      return res.status(401).json({
+        message: "You don't have permission to view job applications",
+      });
+    }
+  
+    // const jobId = req.params.id;
+  
+    try {
+      const applications = await Application.aggregate([
+        {
+          $match: {
+            jobId: jobId,
+            recruiterId: userId,
+          },
+        },
+        {
+          $lookup: {
+            from: "jobapplicantinfos",
+            localField: "userId",
+            foreignField: "userId",
+            as: "applicant",
+          },
+        },
+      ]);
+  
+      res.json(applications);
+    } catch (err) {
+      res.status(400).json(err);
+    }
+  });
+  
 
-      if(user.type !== "recruiter") {
-        return res.status(401).json({
-            message: "You don't have permission to view job applications",
-        });
-      }
-      const jobId = req.params.id;
 
-      let findParams: IFindParams = {
-        jobId: jobId,
-        recruiterId: user.id,
-      }
+// Trial route to get applicant's job applications
 
-      let sortParams = {};
+router.get("/applications-applicant", authenticateToken, async (req: Request, res: Response) => {
 
-      const queryParams: IQueryParams = req.query;
+const user = req.user;
 
-      if (queryParams.status) {
-        findParams = {
-            ...findParams,
-            status: queryParams.status,
-        };
-      }
+const applications = await Application.find({userId: user?.id});
 
-      try {
-        const applications = await Application.find(findParams).collation({locale: "en"}).sort(sortParams).exec();
+if(!applications) {
+    res.status(404).json({message: "No job found for user"});
+    return;
+}
 
-        res.json(applications);
-      } catch (err) {
-        res.status(400).json(err);
-      }
-});
+res.status(200).json(applications);
 
+})
 
 // user gets all his applications depending on whether they are recruiter or applicant type
 
@@ -759,7 +817,7 @@ router.get("/applications", authenticateToken, async(req: Request, res: Response
         {$lookup: {
             from: "jobs",
             localField: "jobId",
-            foreignField: "id",
+            foreignField: "_id",
             as: "job",
         },
         },
@@ -776,13 +834,14 @@ router.get("/applications", authenticateToken, async(req: Request, res: Response
         {
             $match: findParams,
         },
-        {
-            $sort: {
-                dateOfApplication: -1,
-            },
-        },
+        // {
+        //     $sort: {
+        //         dateOfApplication: -1,
+        //     },
+        // },
     ]);
 
+    console.log(applications)
     res.json(applications);
     }
     catch(err) {

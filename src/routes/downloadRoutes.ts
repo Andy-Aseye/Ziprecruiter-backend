@@ -6,7 +6,8 @@ const router = express.Router();
 
 router.get("/resume/:file", (req: Request, res: Response) => {
 try{
-    const address = path.join(__dirname, `../public/resume/${req.params.file}`);
+    const address = path.join(__dirname, `../public/documents/${req.params.file}`);
+    console.log(address)
     fs.accessSync(address, fs.constants.F_OK);
     res.sendFile(address);
 } catch (err) {
@@ -18,9 +19,9 @@ try{
 });
 
 
-router.get("/profile/:file", (req: Request, res: Response) => {
+router.get("/cover-letter/:file", (req: Request, res: Response) => {
     try {
-        const address = path.join(__dirname, `../public/profile/${req.params.file}`)
+        const address = path.join(__dirname, `../public/documents/${req.params.file}`)
         fs.accessSync(address, fs.constants.F_OK);
         res.sendFile(address);
     } catch (err) {

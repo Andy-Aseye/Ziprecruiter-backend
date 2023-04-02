@@ -19,6 +19,9 @@ let jobSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    location: {
+      type: String,
+    },
     duration: {
       type: String,
       min: 0,

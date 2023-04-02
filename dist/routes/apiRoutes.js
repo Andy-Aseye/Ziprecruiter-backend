@@ -235,7 +235,7 @@ router.get("/jobs", authMiddleware_1.authenticateToken, (req, res) => {
 // to get info about a particular job
 router.get("/jobs/:id", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const job = yield Job_1.default.findOne({ _id: req.params._id });
+        const job = yield Job_1.default.findOne({ _id: req.params.id });
         if (job == null) {
             res.status(400).json({
                 message: "Job does not exist",
@@ -549,6 +549,9 @@ router.post("/jobs/:id/applications", authMiddleware_1.authenticateToken, (req, 
             recruiterId: job.userId,
             jobId: job.id,
             status: "applied",
+            title: job.title,
+            salary: job.salary,
+            jobType: job.jobType,
         });
         yield application.save();
         res.json({
@@ -592,6 +595,16 @@ router.get("/jobs/:id/applications", authMiddleware_1.authenticateToken, (req, r
         res.status(400).json(err);
     }
 }));
+// Trial route to get applicant's job applications
+router.get("/applications-applicant", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.user;
+    const applications = yield Application_1.default.find({ userId: user === null || user === void 0 ? void 0 : user.id });
+    if (!applications) {
+        res.status(404).json({ message: "No job found for user" });
+        return;
+    }
+    res.status(200).json(applications);
+}));
 // user gets all his applications depending on whether they are recruiter or applicant type
 router.get("/applications", authMiddleware_1.authenticateToken, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -626,7 +639,7 @@ router.get("/applications", authMiddleware_1.authenticateToken, (req, res) => __
             { $lookup: {
                     from: "jobs",
                     localField: "jobId",
-                    foreignField: "id",
+                    foreignField: "_id",
                     as: "job",
                 },
             },
@@ -643,12 +656,13 @@ router.get("/applications", authMiddleware_1.authenticateToken, (req, res) => __
             {
                 $match: findParams,
             },
-            {
-                $sort: {
-                    dateOfApplication: -1,
-                },
-            },
+            // {
+            //     $sort: {
+            //         dateOfApplication: -1,
+            //     },
+            // },
         ]);
+        console.log(applications);
         res.json(applications);
     }
     catch (err) {
