@@ -7,10 +7,10 @@ import RecruiterInfo from "../models/Recruiter";
 import Job from "../models/Job";
 import Application from "../models/Application"
 import UserAuth from "../models/User";
-// import { QueryString } from 'qs';
 import QueryString = require("qs");
 import validate from "../middleware/validator";
 import { editApplicationSchema, editJobSchema, editUserSchema, postJobSchema } from "../validators/apiRoutesValidators";
+import { NextFunction } from "express-serve-static-core";
 
 
 const router = express.Router();
@@ -73,6 +73,102 @@ router.get("/jobs/recruiter", authenticateToken, async (req: Request, res: Respo
     }
 })
 
+
+// to get jobslist from a filtered search trial
+
+router.get("/jobs", authenticateToken, (req: Request, res: Response) => {
+    try {
+      const user = req.user;
+      let findParams = {};
+      let sortParams = {};
+  
+      if (!user) {
+        res.status(404).json({
+          message: "User not found",
+        });
+        return;
+      }
+  
+      // Extract and parse the `location` parameter from the query string
+      const location = req.query.location ? JSON.parse(req.query.location.toString()) : null;
+      const jobType = req.query.jobType ? JSON.parse(req.query.jobType.toString()) : null;
+      const title = req.query.title ? JSON.parse(req.query.title.toString()) : null;
+
+      if (title) {
+        findParams = {
+          ...findParams,
+          title: {
+            $regex: new RegExp(title.toString(), "i"),
+          },
+        };
+      }
+
+      if (jobType) {
+        let jobTypes = [];
+        if(Array.isArray(jobType)) {
+          jobTypes = jobType;
+        } else {
+          jobTypes = [jobType];
+        }
+      
+        findParams = {
+          ...findParams,
+          jobType: {
+            $in: jobTypes,
+          },
+        };
+      }
+
+      // Use the `location` parameter to construct the `findParams` object
+      if (location) {
+        findParams = {
+          ...findParams,
+          location: {
+            $near: {
+              $geometry: {
+                type: "Point",
+                coordinates: [location.longitude, location.latitude],
+              },
+              $maxDistance: location.maxDistance || 10000,
+            },
+          },
+        };
+      }
+  
+      // Handle other query parameters here...
+  
+      let arr = [
+        {
+          $lookup: {
+            from: "recruiterinfos",
+            localField: "userId",
+            foreignField: "userId",
+            as: "recruiter",
+          },
+        },
+        { $unwind: "$recruiter" },
+        { $match: findParams },
+      ];
+  
+      Job.aggregate(arr)
+        .then((posts) => {
+            console.log(posts);
+          if (posts == null) {
+            res.status(404).json({
+              message: "No job found",
+            });
+            return;
+          }
+          res.json(posts);
+        })
+        .catch((err) => {
+          throw err;
+        });
+    } catch (err) {
+      res.status(400).json(err);
+    }
+  });
+  
 
 
 // Creating a route to access all jobs (based on filter).
@@ -273,6 +369,7 @@ router.get("/jobs/:id", authenticateToken, async (req: Request, res: Response) =
         res.status(400).json(err);
     }
 });
+
 
 // Update a job information
 
@@ -668,55 +765,6 @@ interface IQueryParams {
     limit?: number;
   }
 
-//   To view applications of a particular job
-// router.get("/jobs/:id/applications", authenticateToken, async (req: Request, res: Response) => {
-//     const user = req.user;
-//      if (!user) {
-//         res.status(404).json({
-//           message: "User not found",
-//         });
-//         return;
-//       }
-
-//       interface IFindParams {
-//         jobId: string;
-//         recruiterId: string;
-//         status?: string;
-//       }
-
-//       if(user.type !== "recruiter") {
-//         return res.status(401).json({
-//             message: "You don't have permission to view job applications",
-//         });
-//       }
-//       const jobId = req.params.id;
-
-//       let findParams: IFindParams = {
-//         jobId: jobId,
-//         recruiterId: user.id,
-//       }
-
-//       let sortParams = {};
-
-//       const queryParams: IQueryParams = req.query;
-
-//       if (queryParams.status) {
-//         findParams = {
-//             ...findParams,
-//             status: queryParams.status,
-//         };
-//       }
-
-//       try {
-//         const applications = await Application.find(findParams).collation({locale: "en"}).sort(sortParams).exec();
-
-//         res.json(applications);
-//       } catch (err) {
-//         res.status(400).json(err);
-//       }
-// });
-
-
 router.get("/jobs/:id/applications", authenticateToken, async (req: Request, res: Response) => {
     const user = req.user;
    
@@ -761,7 +809,6 @@ router.get("/jobs/:id/applications", authenticateToken, async (req: Request, res
     }
   });
   
-
 
 // Trial route to get applicant's job applications
 
@@ -850,284 +897,29 @@ router.get("/applications", authenticateToken, async(req: Request, res: Response
 })
 
 
-// update status of application to a job
-router.put("/appications/:id", validate(editApplicationSchema), authenticateToken, async (req: Request, res: Response) => {
-    const user = req.user;
-  const id = req.params.id;
-  const status = req.body.status;
-  const dateOfJoining = req.body.dateOfJoining;
+// Update status of application trial
+router.put("/applications/:id", validate(editApplicationSchema), authenticateToken,async (req: Request, res: Response, next: NextFunction) => {
     
-  if (!user) {
-    res.status(404).json({
-      message: "User not found",
-    });
-    return;
-  }
-
-  try{
-    if(user.type === "recriter") {
-        if(status === "accepted") {
-            const application = await Application.findOne({
-                _id: new Types.ObjectId(id),
-                recruiterId: user.id,
-            }).exec();
-
-            if(!application) {
-                res.status(404).json({
-                    message: "Application not found",
-                })
-                return;
-            }
-
-            const job = await Job.findOne({
-                _id: application.jobId,
-                userId: user.id,
-            }).exec();
-
-            if(!job) {
-                res.status(404).json({
-                    message: "Job does not exist",
-                });
-                return;
-            }
-
-            // const activeApplicationCount = await Application.countDocuments({
-            //     recruiterId: user.id,
-            //     jobId: job._id,
-            //     status: "accepted",
-            // }).exec();
-
-            // if (!job || job.maxPositions === undefined) {
-            //     res.status(404).json({
-            //         message: "Job does not exist or max positions is undefined",
-            //     });
-            //     return;
-            // }
-
-            // if(activeApplicationCount >= job.maxPositions) {
-            //     res.status(400).json({
-            //         message: "All positions for this job are already filled",
-            //     });
-            //     return;
-            // }
-
-            application.status = status;
-            if (dateOfJoining) {
-                application.dateOfJoining = new Date(dateOfJoining);
-            }
-
-            await application.save();
-
-            await Application.updateMany(
-                {
-                    _id: {
-                        $ne: application._id,
-                    },
-                    userId: application.userId,
-                    status: {
-                        $nin: [
-                            "rejected",
-                            "deleted",
-                            "cancelled",
-                            "accepted",
-                            "finished",
-                        ],
-                    },
-                },
-                {
-                    $set: {
-                        status: "cancelled",
-                    },
-                },
-                {multi: true}
-            ).exec();
-
-            if (status === "accepted") {
-                await Job.findByIdAndUpdate({
-                    _id: job.id,
-                    userId: user.id,
-                }
-                // {
-                //     $set: {
-                //         acceptedCandidates: activeApplicationCount + 1,
-                //     },
-                // }
-                ).exec();
-            }
-
-            res.json({
-                message: `Application ${status} successfully`,
-            });
-        }
-        else{
-            const appication = await Application.findByIdAndUpdate({
-                _id: new Types.ObjectId(id),
-                recruiterId: user.id,
-                status: {
-                    $nin: ["rejected", "delete", "cancelled"],
-                },
-            },
-            {
-                $set: {
-                    status: status,
-                }
-            }, {new: true}).exec();
-
-            if (!appication) {
-                res.status(400).json({
-                    message: "Application status cannot be updated"
-                });
-                return;
-            }
-
-            if (status === "finished") {
-                res.json({
-                    message: `Job ${status} succesfully`,
-                });
-            } else {
-                res.json({
-                    message: `Application ${status} successfully`
-                });
-            }
-        }
-    } else {
-        if (status === "cancelled") {
-            const appication = await Application.findByIdAndUpdate(
-                {
-                _id: id,
-                userId: user.id
-                }, 
-                {
-                $set: {
-                    status: status,
-                },
-                 });
-
-                 res.json({
-                    message: `Application ${status} successfully`,
-                 })
-            }
-            else {
-                res.status(401).json({
-                    message: "You don't have permissions to update job status",
-                });
-             }
-         }
-
-  }
-  catch(err) {
-    res.status(400).json(err);
-  }
-  
-})
-
-// To get a list of final applicant for a recruiter's job
-
-router.get("/applicants", authenticateToken, async(req: Request, res: Response) => {
-    const user = req.user;
-    const jobId = req.query.jobId?.toString();
-
-    if(!user) {
-        res.json({
-            message: "User not found"
-        })
-        return;
-    }
+    const id = req.params.id;
+    const {status} = req.body;
 
     try {
-        if(user.type === "recruiter") {
-            let findParams: { recruiterId: string; jobId?: mongoose.Types.ObjectId; status?: { $in: string[] | QueryString.ParsedQs[] } | undefined } = {
-                recruiterId: user?.id
-            };
 
-            if(req.query.jobId) {
-                findParams = {
-                    ...findParams,
-                    jobId: new mongoose.Types.ObjectId(jobId),
-                };
-            }
-            if(req.query.status) {
-                if (Array.isArray(req.query.status)) {
-                    findParams = {
-                        ...findParams,
-                        status: {$in: req.query.status},
-                    };
-                }
-            }
-            let sortParams = {};
+    const updatedApplication = await Application.findByIdAndUpdate(
+        id,
+        { status },
+        { new: true }
+      );
 
-            if(!req.query.asc && !req.query.desc) {
-                sortParams = {_id: 1};
-            }
+      if (!updatedApplication) {
+        return res.status(404).json({ message: 'Application not found' });
+      }
+  
+      return res.status(200).json({ message: 'Application status updated successfully' });
+    } catch (error) {
+      return next(error);
+    }
 
-            if(req.query.asc) {
-                if(Array.isArray(req.query.asc)) {
-                    req.query.asc.map((key) => {
-                        sortParams = {
-                            ...sortParams,
-                            [key as string]: 1,
-                        };
-                    });
-                } else {
-                    sortParams = {
-                        ...sortParams,
-                        [req.query.asc as string]: 1,
-                    };
-                }
-            }
-            if(req.query.desc) {
-                if(Array.isArray(req.query.desc)) {
-                    req.query.desc.map((key) => {
-                        sortParams = {
-                            ...sortParams,
-                            [key as string]: -1,
-                        };
-                    });
-                } else {
-                    sortParams = {
-                    ...sortParams,
-                    [req.query.desc as string]: -1,
-                    };
-                }
-            }
-
-            const applications = await Application.aggregate([{
-                $lookup: {
-                    from: "jobapplicantinfos",
-                    localField: "userId",
-                    foreignField: "userId",
-                    as: "jobApplicant",
-                },
-            },
-            {$unwind: "$jobApplicant"},
-            {
-                $lookup: {
-                    from: "jobs",
-                    localField: "jobId",
-                    foreignField: "_id",
-                    as: "job",
-                },
-            },
-            { $unwind: "$job"},
-            {$match: findParams},
-            {$sort: sortParams},
-        ]);
-
-        if (application.length === 0) {
-            res.status(404).json({
-                message: "No applicants found",
-            })
-            return;
-        }
-        res.json(applications);
-        }
-
-        res.status(400).json({
-            message: "Applicant list is only accessible to recruiters",
-        })
-    } catch(err) {
-        res.status(400).json(err);
-    }2
 })
 
 export default module.exports = router;
