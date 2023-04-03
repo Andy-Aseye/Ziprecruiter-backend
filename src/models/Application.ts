@@ -35,14 +35,6 @@ let appicationSchema = new mongoose.Schema({
     },
     dateOfJoining: {
         type: Date,
-        // validate: [
-        //     {
-        //         // validator: function (value : Date) {
-        //         //     return this.dateApplied <= value;
-        //         // },
-        //         msg: "dateApplied should be greater than dateOfApplication",
-        //     },
-        // ],
     }
 },
 {collation: {locale: "en"}}
