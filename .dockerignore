@@ -1,0 +1,6 @@
+.ebextensions/
+.env.example
+.eslintrc.json
+.gitignore
+buildspec.yml
+README.md
