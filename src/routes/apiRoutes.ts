@@ -82,93 +82,6 @@ router.get(
 
 // to get jobslist from a filtered search trial
 
-// router.get("/jobs", authenticateToken, (req: Request, res: Response) => {
-//     try {
-//       const user = req.user;
-//       let findParams = {};
-//       let sortParams = {};
-
-//       if (!user) {
-//         res.status(404).json({
-//           message: "User not found",
-//         });
-//         return;
-//       }
-
-//       // Extract and parse the `location` parameter from the query string
-//       const location = req.query.location ? JSON.parse(req.query.location.toString()) : null;
-//       const jobType = req.query.jobType ? JSON.parse(req.query.jobType.toString()) : null;
-//       const title = req.query.title ? JSON.parse(req.query.title.toString()) : null;
-
-//       if (title) {
-//         findParams = {
-//           ...findParams,
-//           title: {
-//             $regex: new RegExp(title.toString(), "i"),
-//           },
-//         };
-//       }
-
-//       if (jobType) {
-//         let jobTypes = [];
-//         if(Array.isArray(jobType)) {
-//           jobTypes = jobType;
-//         } else {
-//           jobTypes = [jobType];
-//         }
-
-//         findParams = {
-//           ...findParams,
-//           jobType: {
-//             $in: jobTypes,
-//           },
-//         };
-//       }
-
-//       // Use the `location` parameter to construct the `findParams` object
-//       if (location) {
-//         findParams = {
-//           ...findParams,
-//           location: {
-//             $regex: new RegExp(location.toString(), "i"),
-//           },
-//         };
-//       }
-
-//       // Handle other query parameters here...
-
-//       let arr = [
-//         {
-//           $lookup: {
-//             from: "recruiterinfos",
-//             localField: "userId",
-//             foreignField: "userId",
-//             as: "recruiter",
-//           },
-//         },
-//         { $unwind: "$recruiter" },
-//         { $match: findParams },
-//       ];
-
-//       Job.aggregate(arr)
-//         .then((posts) => {
-//             console.log(posts);
-//           if (posts == null) {
-//             res.status(404).json({
-//               message: "No job found",
-//             });
-//             return;
-//           }
-//           res.json(posts);
-//         })
-//         .catch((err) => {
-//           throw err;
-//         });
-//     } catch (err) {
-//       res.status(400).json(err);
-//     }
-//   });
-
 router.get("/jobs", async (req: Request, res: Response) => {
   const { title, location, salary, jobType } = req.query;
 
@@ -278,7 +191,7 @@ router.put(
       await job.save();
 
       res.json({
-        message: "Job details updated succesfully",
+        message: "Job details updated successfully",
       });
     } catch (err) {
       res.status(400).json(err);

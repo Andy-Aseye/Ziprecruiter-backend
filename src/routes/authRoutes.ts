@@ -78,7 +78,7 @@ router.post(
       );
       res
         .status(201)
-        .json({ token: token, type: user.type, email: user.email });
+        .json({ message: "Signup successful", token: token, type: user.type, email: user.email });
     } catch (err) {
       next(err);
     }
@@ -114,7 +114,7 @@ router.post(
         config.jwtSecret,
         { expiresIn: "8h" }
       );
-      res.status(201).json({ token, type: user.type, email });
+      res.status(201).json({ message: "Signup successful", token, type: user.type, email });
     } catch (err) {
       next(err);
     }
@@ -144,12 +144,14 @@ router.post(
         { _id: user._id, email: user.email, type: user.type },
         JWT_SECRET
       );
-      res.json({
+      res.status(200).json({
+        message: "Login successful",
         token,
         type
       });
     } catch (err) {
       next(err);
+      res.json({message: "Login failed"})
     }
   }
 );
